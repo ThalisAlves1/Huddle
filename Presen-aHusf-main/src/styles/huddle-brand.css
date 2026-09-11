@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  font-family:
+    'Sora',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+html,
+body,
+#root,
+button,
+input,
+select,
+textarea {
+  font-family:
+    'Sora',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.admin-tabs::before,
+.admin-tabs::after {
+  display: none !important;
+  content: none !important;
+}
+
+.admin-brand {
+  width: 100%;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  padding: 10px 8px 18px;
+  border-bottom: 1px solid #E7ECEF;
+}
+
+.admin-brand-horizontal {
+  display: block;
+  width: 100%;
+  max-width: 174px;
+  height: auto;
+  object-fit: contain;
+}
+
+.admin-brand-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  padding: 22px 6px 2px;
+  border-top: 1px solid #E7ECEF;
+}
+
+.admin-brand-vertical {
+  display: block;
+  width: 100%;
+  max-width: 112px;
+  max-height: 150px;
+  height: auto;
+  object-fit: contain;
+  opacity: .96;
+}
+
+.admin-tabs {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.admin-header h1,
+.dashboard-section-header h2,
+.dashboard-filter-heading strong,
+.admin-form h2,
+.admin-modal h2,
+.huddle-detail-modal h2 {
+  font-family:
+    'Sora',
+    system-ui,
+    sans-serif !important;
+  letter-spacing: -.035em;
+}
+
+.admin-header h1 {
+  font-weight: 750 !important;
+}
+
+.admin-tabs button,
+.dashboard-filters button,
+.admin-form button,
+.admin-user-actions button {
+  font-weight: 650 !important;
+}
+
+@media (max-width: 1100px) {
+  .admin-tabs {
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+
+  .admin-brand {
+    flex: 0 0 128px;
+    width: 128px;
+    min-height: 46px;
+    margin: 0 5px 0 0;
+    padding: 3px 12px 3px 4px;
+    border-right: 1px solid #E7ECEF;
+    border-bottom: 0;
+  }
+
+  .admin-brand-horizontal {
+    max-width: 116px;
+  }
+
+  .admin-brand-footer {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-tabs {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-brand {
+    position: sticky;
+    z-index: 3;
+    left: 0;
+    flex: 0 0 106px;
+    width: 106px;
+    min-width: 106px;
+    padding: 4px 9px 4px 3px;
+    background: #FFFFFF;
+  }
+
+  .admin-brand-horizontal {
+    max-width: 96px;
+  }
+
+  .admin-tabs button {
+    flex: 0 0 auto !important;
+    min-width: 102px;
+  }
+}
+
+@media (max-width: 390px) {
+  .admin-brand {
+    flex-basis: 94px;
+    width: 94px;
+    min-width: 94px;
+  }
+
+  .admin-brand-horizontal {
+    max-width: 84px;
+  }
+}

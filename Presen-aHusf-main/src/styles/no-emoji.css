@@ -1,0 +1,87 @@
+/* HUDDLE — interface sem emojis */
+
+.scanner-error,
+.admin-success {
+  position: relative;
+  padding-left: 16px !important;
+}
+
+.scanner-error::before,
+.admin-success::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 9px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+
+.scanner-error::before {
+  background: #D92D20;
+}
+
+.admin-success::before {
+  background: #009DAB;
+}
+
+.dashboard-kpi-icon {
+  font-size: 0 !important;
+}
+
+.dashboard-kpi-icon::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.admin-search-box > span {
+  display: none !important;
+}
+
+.admin-search-box {
+  position: relative;
+}
+
+.admin-search-box::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  transform: translateY(-55%);
+  border: 2px solid #667085;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.admin-search-box::after {
+  content: "";
+  position: absolute;
+  left: 26px;
+  top: calc(50% + 6px);
+  width: 6px;
+  height: 2px;
+  transform: rotate(45deg);
+  transform-origin: left center;
+  border-radius: 2px;
+  background: #667085;
+  pointer-events: none;
+}
+
+.admin-search-box input {
+  padding-left: 42px !important;
+}
+
+.admin-modal-header > button,
+.huddle-detail-header > button {
+  width: auto !important;
+  min-width: 68px;
+  padding: 0 10px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
