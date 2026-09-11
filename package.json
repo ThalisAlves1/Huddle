@@ -1,10 +1,13 @@
 {
   "name": "huddle-presenca-workspace",
   "private": true,
+  "workspaces": [
+    "Presen-aHusf-main"
+  ],
   "scripts": {
-    "dev": "npm --prefix ./Presen-aHusf-main run dev",
-    "build": "npm --prefix ./Presen-aHusf-main run build",
-    "lint": "npm --prefix ./Presen-aHusf-main run lint",
-    "preview": "npm --prefix ./Presen-aHusf-main run preview"
+    "dev": "npm run dev --workspace=huddle-presenca",
+    "build": "npm run build --workspace=huddle-presenca",
+    "lint": "npm run lint --workspace=huddle-presenca",
+    "preview": "npm run preview --workspace=huddle-presenca"
   }
 }
