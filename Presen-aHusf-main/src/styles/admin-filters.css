@@ -2278,6 +2278,17 @@ body {
   background: var(--adm-teal-soft);
 }
 
+.admin-delete-button {
+  border: 1px solid rgba(185,62,62,.2);
+  color: #A63434;
+  background: #FFF0F0;
+}
+
+.admin-delete-button:hover:not(:disabled) {
+  border-color: rgba(185,62,62,.38);
+  background: #FFE2E2;
+}
+
 .admin-user-active {
   color: var(--adm-teal-dark);
   background: var(--adm-teal-soft);

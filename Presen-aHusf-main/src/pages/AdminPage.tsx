@@ -1185,6 +1185,51 @@ export function AdminPage() {
     }
   }
 
+  async function excluirSetor(setor: Setor) {
+    const confirmar = window.confirm(
+      `Excluir o setor "${setor.nome}"? Essa ação não pode ser desfeita.`
+    )
+
+    if (!confirmar) {
+      return
+    }
+
+    try {
+      setSalvando(true)
+      setErro('')
+      setSucesso('')
+
+      const { error } = await supabase.rpc(
+        'admin_excluir_setor',
+        {
+          p_setor_id: setor.id,
+        }
+      )
+
+      if (error) {
+        throw error
+      }
+
+      setSucesso('Setor excluído com sucesso.')
+
+      await Promise.all([
+        carregarDados(false),
+        carregarDashboard(false),
+      ])
+    } catch (error) {
+      console.error('Erro ao excluir setor:', error)
+
+      setErro(
+        obterMensagemErro(
+          error,
+          'Não foi possível excluir o setor.'
+        )
+      )
+    } finally {
+      setSalvando(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="loading-page">
@@ -2545,6 +2590,15 @@ export function AdminPage() {
                             : 'INATIVO'
                         }
                       </small>
+
+                        <button
+                          type="button"
+                          className="admin-delete-button"
+                          onClick={() => void excluirSetor(setor)}
+                          disabled={salvando}
+                        >
+                          Excluir
+                        </button>
                     </div>
                   )
                 )

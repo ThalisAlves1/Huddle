@@ -185,6 +185,31 @@ $$;
 revoke all on function public.admin_criar_setor(text) from public;
 grant execute on function public.admin_criar_setor(text) to authenticated;
 
+create or replace function public.admin_excluir_setor(p_setor_id uuid)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if not public.usuario_e_admin() then
+    raise exception 'Acesso permitido somente para administradores.';
+  end if;
+
+  if not exists (select 1 from public.setores where id = p_setor_id) then
+    raise exception 'Setor não encontrado.';
+  end if;
+
+  if exists (select 1 from public.profiles where setor_id = p_setor_id)
+    or exists (select 1 from public.huddles where setor_id = p_setor_id) then
+    raise exception 'Não é possível excluir um setor que possui usuários ou huddles vinculados.';
+  end if;
+
+  delete from public.setores where id = p_setor_id;
+end;
+$$;
+
+revoke all on function public.admin_excluir_setor(uuid) from public;
+grant execute on function public.admin_excluir_setor(uuid) to authenticated;
+
 create or replace function public.admin_get_dashboard_v1()
 returns json
 language plpgsql security definer set search_path = public
