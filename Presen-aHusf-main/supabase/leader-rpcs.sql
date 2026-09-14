@@ -108,7 +108,10 @@ begin
     'Huddle diario',
     null,
     auth.uid(),
-    case when now() >= inicio_huddle then 'EM_ANDAMENTO' else 'AGENDADO' end,
+    (case
+      when now() >= inicio_huddle then 'EM_ANDAMENTO'
+      else 'AGENDADO'
+    end)::public.status_huddle,
     inicio_huddle,
     fim_huddle,
     greatest(p_duracao_minutos, 1),
