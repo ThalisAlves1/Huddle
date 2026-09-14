@@ -109,14 +109,16 @@ begin
   end if;
 
   with hs as (
-    select h.id, h.codigo, h.titulo, h.setor_id, s.nome setor_nome,
+    select h.id, h.codigo, h.titulo, h.setor_id,
+      coalesce(s.nome, 'Todos os setores') setor_nome,
       h.data_local, h.status, h.responsavel_id, h.iniciado_em, h.encerrado_em,
-      (select count(*) from public.profiles p where p.setor_id = h.setor_id and p.ativo) total_esperado,
+      (select count(*) from public.profiles p
+       where p.ativo and (h.setor_id is null or p.setor_id = h.setor_id)) total_esperado,
       (select count(*) from public.presencas pr where pr.huddle_id = h.id and pr.confirmado_em is not null) total_confirmado,
       (select count(*) from public.presencas pr where pr.huddle_id = h.id and pr.status = 'PRESENTE') total_presentes,
       (select count(*) from public.presencas pr where pr.huddle_id = h.id and pr.status = 'ATRASADO') total_atrasados
     from public.huddles h
-    join public.setores s on s.id = h.setor_id
+    left join public.setores s on s.id = h.setor_id
     where h.data_local between p_data_inicio and p_data_fim
       and (p_setor_id is null or h.setor_id = p_setor_id)
   ), totals as (
@@ -173,5 +175,86 @@ $$;
 
 revoke all on function public.admin_get_presencas_dashboard_v1(date, date, uuid) from public;
 grant execute on function public.admin_get_presencas_dashboard_v1(date, date, uuid) to authenticated;
+
+create or replace function public.admin_get_detalhes_huddle_v1(
+  p_huddle_id uuid
+)
+returns json
+language plpgsql security definer set search_path = public
+as $$
+declare resultado json;
+begin
+  if not public.usuario_e_admin() then
+    raise exception 'Acesso permitido somente para administradores.';
+  end if;
+
+  if not exists (select 1 from public.huddles where id = p_huddle_id) then
+    raise exception 'Huddle nao encontrado.';
+  end if;
+
+  select json_build_object(
+    'huddle', json_build_object(
+      'huddle_id', h.id,
+      'codigo', h.codigo,
+      'titulo', h.titulo,
+      'setor_id', h.setor_id,
+      'setor_nome', coalesce(s.nome, 'Todos os setores'),
+      'data_local', h.data_local,
+      'status', h.status,
+      'criado_por', h.responsavel_id,
+      'responsavel_nome', responsavel.nome,
+      'responsavel_matricula', responsavel.matricula,
+      'iniciado_em', h.iniciado_em,
+      'atraso_apos', h.iniciado_em + make_interval(mins => h.atraso_apos_minutos),
+      'expira_em', h.expira_em,
+      'encerrado_em', h.encerrado_em,
+      'created_at', h.criado_em
+    ),
+    'kpis', json_build_object(
+      'total_esperado', count(*) filter (where p.ativo and (h.setor_id is null or p.setor_id = h.setor_id)),
+      'total_confirmado', count(pr.id) filter (where pr.confirmado_em is not null),
+      'total_presentes', count(pr.id) filter (where pr.status = 'PRESENTE'),
+      'total_atrasados', count(pr.id) filter (where pr.status = 'ATRASADO'),
+      'total_ausentes', count(*) filter (where p.ativo and (h.setor_id is null or p.setor_id = h.setor_id) and pr.id is null),
+      'taxa_participacao', round((100.0 * count(pr.id) filter (where pr.confirmado_em is not null) / nullif(count(*) filter (where p.ativo and (h.setor_id is null or p.setor_id = h.setor_id)), 0))::numeric, 1),
+      'taxa_pontualidade', round((100.0 * count(pr.id) filter (where pr.status = 'PRESENTE') / nullif(count(pr.id) filter (where pr.confirmado_em is not null), 0))::numeric, 1)
+    ),
+    'participantes', coalesce((
+      select json_agg(json_build_object(
+        'user_id', p.id,
+        'nome', p.nome,
+        'matricula', p.matricula,
+        'setor_nome', coalesce(ps.nome, 'Sem setor'),
+        'perfil', p.perfil,
+        'status', coalesce(pr.status::text, 'AUSENTE'),
+        'confirmado_em', pr.confirmado_em,
+        'aceite', coalesce(pr.aceite, false),
+        'aceite_em', pr.aceite_em,
+        'aceite_texto', pr.aceite_texto,
+        'aceite_versao', pr.aceite_versao,
+        'ip_address', null,
+        'user_agent', null,
+        'era_esperado', p.ativo and (h.setor_id is null or p.setor_id = h.setor_id)
+      ) order by p.nome)
+      from public.profiles p
+      left join public.setores ps on ps.id = p.setor_id
+      left join public.presencas pr on pr.huddle_id = h.id and pr.user_id = p.id
+      where p.ativo and (h.setor_id is null or p.setor_id = h.setor_id)
+    ), '[]'::json)
+  ) into resultado
+  from public.huddles h
+  left join public.setores s on s.id = h.setor_id
+  left join public.profiles responsavel on responsavel.id = h.responsavel_id
+  left join public.profiles p on p.ativo and (h.setor_id is null or p.setor_id = h.setor_id)
+  left join public.presencas pr on pr.huddle_id = h.id and pr.user_id = p.id
+  where h.id = p_huddle_id
+  group by h.id, s.nome, responsavel.nome, responsavel.matricula;
+
+  return resultado;
+end;
+$$;
+
+revoke all on function public.admin_get_detalhes_huddle_v1(uuid) from public;
+grant execute on function public.admin_get_detalhes_huddle_v1(uuid) to authenticated;
 
 notify pgrst, 'reload schema';

@@ -50,7 +50,9 @@ grant execute on function public.get_painel_lider() to authenticated;
 
 create or replace function public.criar_huddle_lider(
   p_duracao_minutos integer default 30,
-  p_atraso_apos_minutos integer default 10
+  p_atraso_apos_minutos integer default 10,
+  p_hora_inicio time default null,
+  p_hora_fim time default null
 )
 returns public.huddles
 language plpgsql security definer set search_path = public
@@ -59,6 +61,8 @@ declare
   perfil_atual public.profiles;
   novo_huddle public.huddles;
   codigo_gerado text;
+  inicio_huddle timestamptz;
+  fim_huddle timestamptz;
 begin
   select * into perfil_atual
   from public.profiles
@@ -74,6 +78,16 @@ begin
       and status in ('AGENDADO', 'EM_ANDAMENTO')
   ) then
     raise exception 'Voce ja possui um Huddle aberto.';
+  end if;
+
+  inicio_huddle := current_date + coalesce(p_hora_inicio, localtime);
+  fim_huddle := current_date + coalesce(
+    p_hora_fim,
+    localtime + make_interval(mins => greatest(p_duracao_minutos, 1))
+  );
+
+  if fim_huddle <= inicio_huddle then
+    fim_huddle := fim_huddle + interval '1 day';
   end if;
 
   codigo_gerado := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6));
@@ -94,9 +108,9 @@ begin
     'Huddle diario',
     null,
     auth.uid(),
-    'EM_ANDAMENTO',
-    now(),
-    now() + make_interval(mins => greatest(p_duracao_minutos, 1)),
+    case when now() >= inicio_huddle then 'EM_ANDAMENTO' else 'AGENDADO' end,
+    inicio_huddle,
+    fim_huddle,
     greatest(p_duracao_minutos, 1),
     greatest(p_atraso_apos_minutos, 0),
     'HUDDLE:' || gen_random_uuid()::text
@@ -106,7 +120,9 @@ begin
 end;
 $$;
 
-grant execute on function public.criar_huddle_lider(integer, integer) to authenticated;
+drop function if exists public.criar_huddle_lider(integer, integer);
+
+grant execute on function public.criar_huddle_lider(integer, integer, time, time) to authenticated;
 
 create or replace function public.get_participantes_huddle_lider(
   p_huddle_id uuid

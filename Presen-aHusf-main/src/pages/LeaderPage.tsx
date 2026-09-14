@@ -74,6 +74,35 @@ type Participante = {
 }
 
 
+function obterHoraAtual() {
+
+  const agora = new Date()
+
+  return `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`
+}
+
+
+function obterHoraFutura(minutos: number) {
+
+  const data = new Date()
+
+  data.setMinutes(data.getMinutes() + minutos)
+
+  return `${String(data.getHours()).padStart(2, '0')}:${String(data.getMinutes()).padStart(2, '0')}`
+}
+
+
+function calcularDuracaoMinutos(inicio: string, fim: string) {
+
+  const [horaInicio, minutoInicio] = inicio.split(':').map(Number)
+  const [horaFim, minutoFim] = fim.split(':').map(Number)
+  const inicioEmMinutos = horaInicio * 60 + minutoInicio
+  const fimEmMinutos = horaFim * 60 + minutoFim
+
+  return (fimEmMinutos - inicioEmMinutos + 1440) % 1440 || 1440
+}
+
+
 export function LeaderPage() {
 
   const navigate =
@@ -123,6 +152,20 @@ export function LeaderPage() {
     setIniciando,
   ] =
     useState(false)
+
+
+  const [
+    horaInicio,
+    setHoraInicio,
+  ] =
+    useState(() => obterHoraAtual())
+
+
+  const [
+    horaFim,
+    setHoraFim,
+  ] =
+    useState(() => obterHoraFutura(60))
 
 
   const [
@@ -407,6 +450,10 @@ export function LeaderPage() {
 
       setErro('')
 
+      if (!horaInicio || !horaFim) {
+        throw new Error('Informe o horário de início e término.')
+      }
+
 
       const {
         error,
@@ -416,7 +463,16 @@ export function LeaderPage() {
             'criar_huddle_lider',
             {
               p_duracao_minutos:
-                30,
+                calcularDuracaoMinutos(
+                  horaInicio,
+                  horaFim
+                ),
+
+              p_hora_inicio:
+                horaInicio,
+
+              p_hora_fim:
+                horaFim,
 
               p_atraso_apos_minutos:
                 10,
@@ -669,6 +725,28 @@ export function LeaderPage() {
             reunida.
           </p>
 
+          <div className="leader-schedule-fields">
+
+            <label>
+              Início
+              <input
+                type="time"
+                value={horaInicio}
+                onChange={event => setHoraInicio(event.target.value)}
+              />
+            </label>
+
+            <label>
+              Término
+              <input
+                type="time"
+                value={horaFim}
+                onChange={event => setHoraFim(event.target.value)}
+              />
+            </label>
+
+          </div>
+
 
           <button
             className="primary-button leader-start-button"
@@ -701,7 +779,12 @@ export function LeaderPage() {
             <div>
 
               <span>
-                HUDDLE EM ANDAMENTO
+                {
+                  painel
+                    .status === 'AGENDADO'
+                    ? 'HUDDLE AGENDADO'
+                    : 'HUDDLE EM ANDAMENTO'
+                }
               </span>
 
               <h2>
