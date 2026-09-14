@@ -325,6 +325,8 @@ $$;
 revoke all on function public.admin_get_presencas_dashboard_v1(date, date, uuid) from public;
 grant execute on function public.admin_get_presencas_dashboard_v1(date, date, uuid) to authenticated;
 
+notify pgrst, 'reload schema';
+
 create or replace function public.get_home_colaborador()
 returns json
 language sql stable security definer set search_path = public

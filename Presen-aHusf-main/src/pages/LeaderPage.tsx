@@ -63,6 +63,8 @@ type Participante = {
 
   matricula: string
 
+  setor_nome: string | null
+
   status:
     | 'PRESENTE'
     | 'ATRASADO'
@@ -927,6 +929,16 @@ export function LeaderPage() {
                           </strong>
 
                           <span>
+
+                            Setor{' '}
+                            {
+                              participante
+                                .setor_nome
+                              ||
+                              'Sem setor'
+                            }
+                            {' - '}
+
                             Matrícula{' '}
                             {
                               participante

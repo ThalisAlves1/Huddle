@@ -108,6 +108,49 @@ $$;
 
 grant execute on function public.criar_huddle_lider(integer, integer) to authenticated;
 
+create or replace function public.get_participantes_huddle_lider(
+  p_huddle_id uuid
+)
+returns table (
+  user_id uuid,
+  nome text,
+  matricula text,
+  setor_nome text,
+  status public.status_presenca,
+  confirmado_em timestamptz
+)
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if not exists (
+    select 1
+    from public.huddles h
+    where h.id = p_huddle_id
+      and h.responsavel_id = auth.uid()
+  ) then
+    raise exception 'Huddle nao encontrado ou sem permissao.';
+  end if;
+
+  return query
+  select
+    p.id,
+    p.nome,
+    p.matricula,
+    s.nome,
+    pr.status,
+    pr.confirmado_em
+  from public.profiles p
+  left join public.setores s on s.id = p.setor_id
+  left join public.presencas pr
+    on pr.huddle_id = p_huddle_id
+    and pr.user_id = p.id
+  where p.ativo = true
+  order by p.nome;
+end;
+$$;
+
+grant execute on function public.get_participantes_huddle_lider(uuid) to authenticated;
+
 create or replace function public.encerrar_huddle_lider(p_huddle_id uuid)
 returns public.huddles
 language plpgsql security definer set search_path = public
