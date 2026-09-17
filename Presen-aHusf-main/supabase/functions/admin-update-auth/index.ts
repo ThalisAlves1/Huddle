@@ -1,6 +1,6 @@
 import {
   createClient,
-} from 'npm:@supabase/supabase-js@2'
+} from '@supabase/supabase-js'
 
 
 const corsHeaders = {
@@ -50,8 +50,123 @@ function respostaJson(
 }
 
 
+function escaparHtml(valor: string) {
+
+  return valor
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+
+}
+
+
+async function enviarAvisoAlteracaoSenha(
+  destinatario: string,
+  nome: string
+) {
+
+  const resendApiKey =
+    Deno.env.get(
+      'RESEND_API_KEY'
+    )
+
+
+  const resendFromEmail =
+    Deno.env.get(
+      'RESEND_FROM_EMAIL'
+    )
+
+
+  if (
+    !resendApiKey ||
+    !resendFromEmail
+  ) {
+
+    throw new Error(
+      'Resend não configurado. Defina RESEND_API_KEY e RESEND_FROM_EMAIL.'
+    )
+
+  }
+
+
+  const nomeSeguro =
+    escaparHtml(
+      nome
+    )
+
+
+  const alteradoEm =
+    new Intl.DateTimeFormat(
+      'pt-BR',
+      {
+        dateStyle: 'long',
+        timeStyle: 'short',
+        timeZone: 'America/Sao_Paulo',
+      }
+    ).format(
+      new Date()
+    )
+
+
+  const response =
+    await fetch(
+      'https://api.resend.com/emails',
+      {
+        method: 'POST',
+
+        headers: {
+          Authorization:
+            `Bearer ${resendApiKey}`,
+
+          'Content-Type':
+            'application/json',
+
+          'User-Agent':
+            'huddle-presenca/1.0',
+        },
+
+        body: JSON.stringify(
+          {
+            from:
+              resendFromEmail,
+
+            to: [
+              destinatario,
+            ],
+
+            subject:
+              'Sua senha do Huddle foi alterada',
+
+            text:
+              `Olá, ${nome}. Sua senha de acesso ao Huddle foi alterada em ${alteradoEm}. Se você não reconhece esta alteração, entre em contato imediatamente com o administrador do sistema.`,
+
+            html:
+              `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;max-width:600px;margin:auto"><h2 style="color:#0f766e">Senha alterada</h2><p>Olá, <strong>${nomeSeguro}</strong>.</p><p>Sua senha de acesso ao Huddle foi alterada em <strong>${alteradoEm}</strong>.</p><p>Se você não reconhece esta alteração, entre em contato imediatamente com o administrador do sistema.</p><p style="font-size:13px;color:#64748b">Por segurança, sua senha nunca é enviada por e-mail.</p></div>`,
+          }
+        ),
+      }
+    )
+
+
+  if (!response.ok) {
+
+    const detalhe =
+      await response.text()
+
+
+    throw new Error(
+      `Resend respondeu com status ${response.status}: ${detalhe}`
+    )
+
+  }
+
+}
+
+
 Deno.serve(
-  async request => {
+  async (request: Request) => {
 
     // ========================================================
     // CORS
@@ -509,6 +624,83 @@ Deno.serve(
 
 
       // ======================================================
+      // NOTIFICAR ALTERACAO DE SENHA PELO RESEND
+      // A senha nunca e incluida no e-mail.
+      // ======================================================
+
+      let notificationSent:
+        boolean | null = null
+
+
+      let notificationWarning:
+        string | null = null
+
+
+      if (password) {
+
+        const destinatario =
+          updatedUserData.user.email
+
+
+        if (!destinatario) {
+
+          notificationSent =
+            false
+
+
+          notificationWarning =
+            'A senha foi alterada, mas o usuário não possui um e-mail para receber a notificação.'
+
+        } else {
+
+          try {
+
+            const nomeUsuario =
+              String(
+                updatedUserData.user
+                  .user_metadata
+                  ?.nome
+                ??
+                targetUser
+                  .user_metadata
+                  ?.nome
+                ??
+                'usuário'
+              )
+
+
+            await enviarAvisoAlteracaoSenha(
+              destinatario,
+              nomeUsuario
+            )
+
+
+            notificationSent =
+              true
+
+          } catch (notificationError) {
+
+            console.error(
+              'Erro ao enviar aviso de alteração de senha:',
+              notificationError
+            )
+
+
+            notificationSent =
+              false
+
+
+            notificationWarning =
+              'A senha foi alterada, mas não foi possível enviar a notificação por e-mail.'
+
+          }
+
+        }
+
+      }
+
+
+      // ======================================================
       // RESPOSTA
       // ======================================================
 
@@ -518,6 +710,12 @@ Deno.serve(
 
           message:
             'Credenciais atualizadas com sucesso.',
+
+          notification_sent:
+            notificationSent,
+
+          notification_warning:
+            notificationWarning,
 
           user: {
             id:

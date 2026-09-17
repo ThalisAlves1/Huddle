@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useState,
 } from 'react'
@@ -13,7 +14,7 @@ import {
 
 import {
   useAuth,
-} from '../contexts/AuthContext'
+} from '../hooks/useAuth'
 
 
 type PerfilUsuario =
@@ -48,18 +49,7 @@ export function EntryPage() {
     useState('')
 
 
-  useEffect(() => {
-
-    if (!user) {
-      return
-    }
-
-    carregarPerfil()
-
-  }, [user])
-
-
-  async function carregarPerfil() {
+  const carregarPerfil = useCallback(async () => {
 
     if (!user) {
       return
@@ -206,7 +196,20 @@ export function EntryPage() {
 
     }
 
-  }
+  }, [navigate, user])
+
+
+  useEffect(() => {
+
+    if (!user) {
+      return
+    }
+
+    // A consulta externa inicializa o estado da rota após a autenticação.
+    // oxlint-disable-next-line react/set-state-in-effect
+    void carregarPerfil()
+
+  }, [carregarPerfil, user])
 
 
   if (erro) {

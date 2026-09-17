@@ -1,64 +1,49 @@
 import {
+  lazy,
+  Suspense,
+} from 'react'
+
+import {
   Route,
   Routes,
 } from 'react-router'
 
 import {
-  LoginPage,
-} from './pages/LoginPage'
-
-import {
-  CadastroPage,
-} from './pages/CadastroPage'
-
-import {
-  EntryPage,
-} from './pages/EntryPage'
-
-import {
-  HomePage,
-} from './pages/HomePage'
-
-import {
-  LeaderPage,
-} from './pages/LeaderPage'
-
-import {
-  ScannerPage,
-} from './pages/ScannerPage'
-
-import {
-  ConfirmarPresencaPage,
-} from './pages/ConfirmarPresencaPage'
-
-import {
-  PresencaConfirmadaPage,
-} from './pages/PresencaConfirmadaPage'
-
-import {
-  HistoryPage,
-} from './pages/HistoryPage'
-
-import {
-  EvidencePage,
-} from './pages/EvidencePage'
-
-import {
   ProtectedRoute,
 } from './components/ProtectedRoute'
 
-import {
-  AdminPage,
-} from './pages/AdminPage'
-
 import './App.css'
 import './styles/scanner-ui.css'
+
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage').then(module => ({ default: module.LoginPage })))
+const CadastroPage = lazy(() =>
+  import('./pages/CadastroPage').then(module => ({ default: module.CadastroPage })))
+const EntryPage = lazy(() =>
+  import('./pages/EntryPage').then(module => ({ default: module.EntryPage })))
+const HomePage = lazy(() =>
+  import('./pages/HomePage').then(module => ({ default: module.HomePage })))
+const LeaderPage = lazy(() =>
+  import('./pages/LeaderPage').then(module => ({ default: module.LeaderPage })))
+const ScannerPage = lazy(() =>
+  import('./pages/ScannerPage').then(module => ({ default: module.ScannerPage })))
+const ConfirmarPresencaPage = lazy(() =>
+  import('./pages/ConfirmarPresencaPage').then(module => ({ default: module.ConfirmarPresencaPage })))
+const PresencaConfirmadaPage = lazy(() =>
+  import('./pages/PresencaConfirmadaPage').then(module => ({ default: module.PresencaConfirmadaPage })))
+const HistoryPage = lazy(() =>
+  import('./pages/HistoryPage').then(module => ({ default: module.HistoryPage })))
+const EvidencePage = lazy(() =>
+  import('./pages/EvidencePage').then(module => ({ default: module.EvidencePage })))
+const AdminPage = lazy(() =>
+  import('./pages/AdminPage').then(module => ({ default: module.AdminPage })))
 
 function App() {
 
   return (
 
-    <Routes>
+    <Suspense fallback={<div>Carregando...</div>}>
+      <Routes>
 
 <Route
   path="/admin"
@@ -180,7 +165,8 @@ function App() {
       />
 
 
-    </Routes>
+      </Routes>
+    </Suspense>
 
   )
 

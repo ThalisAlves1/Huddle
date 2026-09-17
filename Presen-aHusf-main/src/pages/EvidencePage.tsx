@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useState,
 } from 'react'
@@ -152,16 +153,7 @@ export function EvidencePage() {
     )
 
 
-  useEffect(() => {
-
-    if (huddleId) {
-      carregarEvidencia()
-    }
-
-  }, [huddleId])
-
-
-  async function carregarEvidencia() {
+  const carregarEvidencia = useCallback(async () => {
 
     if (!huddleId) {
 
@@ -300,7 +292,18 @@ export function EvidencePage() {
 
     }
 
-  }
+  }, [huddleId])
+
+
+  useEffect(() => {
+
+    if (huddleId) {
+      // A consulta remota inicializa a evidência selecionada.
+      // oxlint-disable-next-line react/set-state-in-effect
+      void carregarEvidencia()
+    }
+
+  }, [carregarEvidencia, huddleId])
 
 
   function formatarData(

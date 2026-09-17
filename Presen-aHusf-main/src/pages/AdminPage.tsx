@@ -8,7 +8,7 @@ import {
 import logoHorizontal from '../assets/logo-huddle-horizontal.png'
 import logoVertical from '../assets/logo-huddle-vertical.png'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
 import '../styles/admin-filters.css'
 import '../styles/huddle-brand.css'
@@ -525,6 +525,8 @@ export function AdminPage() {
   useEffect(() => {
     void carregarDados()
     void carregarDashboard()
+    // A carga inicial deve ocorrer apenas ao montar o painel.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const usuariosFiltrados = useMemo(() => {
@@ -1051,6 +1053,22 @@ export function AdminPage() {
 
       verificarErroResposta(data)
 
+      const avisoNotificacao =
+        informouSenha
+        && data
+        && typeof data === 'object'
+        && 'notification_warning' in data
+        && typeof data.notification_warning === 'string'
+          ? data.notification_warning
+          : ''
+
+      const notificacaoEnviada =
+        informouSenha
+        && data
+        && typeof data === 'object'
+        && 'notification_sent' in data
+        && data.notification_sent === true
+
       setEditNovaSenha('')
 
       setUsuarioEditando(usuarioAtual => {
@@ -1068,11 +1086,14 @@ export function AdminPage() {
       })
 
       setSucesso(
-        informouSenha && alterouEmail
-          ? 'E-mail e senha atualizados com sucesso.'
-          : alterouEmail
-            ? 'E-mail atualizado com sucesso.'
-            : 'Senha atualizada com sucesso.'
+        avisoNotificacao
+          || (
+            informouSenha && alterouEmail
+              ? `E-mail e senha atualizados com sucesso.${notificacaoEnviada ? ' A notificação foi enviada.' : ''}`
+              : alterouEmail
+                ? 'E-mail atualizado com sucesso.'
+                : `Senha atualizada com sucesso.${notificacaoEnviada ? ' A notificação foi enviada.' : ''}`
+          )
       )
 
       await carregarDados(false)

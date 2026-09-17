@@ -1,6 +1,4 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useState,
   type ReactNode,
@@ -8,22 +6,10 @@ import {
 
 import type {
   Session,
-  User,
 } from '@supabase/supabase-js'
 
 import { supabase } from '../lib/supabase'
-
-interface AuthContextData {
-  session: Session | null
-  user: User | null
-  loading: boolean
-  logout: () => Promise<void>
-}
-
-const AuthContext =
-  createContext<AuthContextData | undefined>(
-    undefined
-  )
+import { AuthContext } from './auth-context'
 
 export function AuthProvider({
   children,
@@ -77,17 +63,4 @@ export function AuthProvider({
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth() {
-  const context =
-    useContext(AuthContext)
-
-  if (!context) {
-    throw new Error(
-      'useAuth precisa estar dentro do AuthProvider'
-    )
-  }
-
-  return context
 }

@@ -30,3 +30,20 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Notificação de alteração de senha com Resend
+
+A função `admin-update-auth` envia uma notificação de segurança quando um administrador altera a senha de um usuário. A nova senha não é enviada por e-mail.
+
+Configure estes secrets em **Supabase > Edge Functions > Secrets**:
+
+```env
+RESEND_API_KEY=re_xxxxxxxxx
+RESEND_FROM_EMAIL=Huddle <acesso@seu-dominio.com>
+```
+
+O endereço de envio precisa pertencer a um domínio verificado no Resend. Depois, publique novamente a função:
+
+```bash
+supabase functions deploy admin-update-auth
+```

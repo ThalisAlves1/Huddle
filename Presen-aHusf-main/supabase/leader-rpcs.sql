@@ -61,6 +61,7 @@ declare
   perfil_atual public.profiles;
   novo_huddle public.huddles;
   codigo_gerado text;
+  data_huddle date;
   inicio_huddle timestamptz;
   fim_huddle timestamptz;
 begin
@@ -80,11 +81,23 @@ begin
     raise exception 'Voce ja possui um Huddle aberto.';
   end if;
 
-  inicio_huddle := current_date + coalesce(p_hora_inicio, localtime);
-  fim_huddle := current_date + coalesce(
-    p_hora_fim,
-    localtime + make_interval(mins => greatest(p_duracao_minutos, 1))
-  );
+  -- Os horarios recebidos pela tela sao horarios locais de Sao Paulo.
+  -- A conversao explicita evita que o PostgreSQL os interprete como UTC,
+  -- o que antecipava o inicio em 3 horas e marcava presencas como atrasadas.
+  data_huddle := (now() at time zone 'America/Sao_Paulo')::date;
+  inicio_huddle := (
+    data_huddle + coalesce(
+      p_hora_inicio,
+      (now() at time zone 'America/Sao_Paulo')::time
+    )
+  ) at time zone 'America/Sao_Paulo';
+  fim_huddle := (
+    data_huddle + coalesce(
+      p_hora_fim,
+      (now() at time zone 'America/Sao_Paulo')::time
+        + make_interval(mins => greatest(p_duracao_minutos, 1))
+    )
+  ) at time zone 'America/Sao_Paulo';
 
   if fim_huddle <= inicio_huddle then
     fim_huddle := fim_huddle + interval '1 day';
@@ -98,6 +111,7 @@ begin
     setor_id,
     responsavel_id,
     status,
+    data_local,
     iniciado_em,
     expira_em,
     duracao_minutos,
@@ -112,6 +126,7 @@ begin
       when now() >= inicio_huddle then 'EM_ANDAMENTO'
       else 'AGENDADO'
     end)::public.status_huddle,
+    data_huddle,
     inicio_huddle,
     fim_huddle,
     greatest(p_duracao_minutos, 1),

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useState,
 } from 'react'
@@ -75,14 +76,7 @@ export function ConfirmarPresencaPage() {
     useState('')
 
 
-  useEffect(() => {
-
-    validarNovamente()
-
-  }, [])
-
-
-  async function validarNovamente() {
+  const validarNovamente = useCallback(async () => {
 
     const payload =
       sessionStorage
@@ -137,7 +131,16 @@ export function ConfirmarPresencaPage() {
 
     setLoading(false)
 
-  }
+  }, [navigate])
+
+
+  useEffect(() => {
+
+    // A validação remota inicializa os dados exibidos nesta rota.
+    // oxlint-disable-next-line react/set-state-in-effect
+    void validarNovamente()
+
+  }, [validarNovamente])
 
 
   async function confirmar() {

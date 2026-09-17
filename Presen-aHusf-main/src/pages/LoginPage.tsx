@@ -19,7 +19,7 @@ import {
 
 import {
   useAuth,
-} from '../contexts/AuthContext'
+} from '../hooks/useAuth'
 
 import logoVertical from '../assets/logo-huddle-vertical.png'
 

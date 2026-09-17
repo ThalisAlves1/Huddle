@@ -16,7 +16,7 @@ import {
 
 import {
   useAuth,
-} from '../contexts/AuthContext'
+} from '../hooks/useAuth'
 
 
 type Painel = {
