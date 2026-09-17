@@ -47,3 +47,25 @@ O endereço de envio precisa pertencer a um domínio verificado no Resend. Depoi
 ```bash
 supabase functions deploy admin-update-auth
 ```
+
+## Recuperação de senha
+
+O login possui o fluxo **Esqueci minha senha**, usando o Supabase Auth. Para que os e-mails sejam enviados pelo Resend, configure em **Authentication > Emails > SMTP Settings**:
+
+```text
+Host: smtp.resend.com
+Port: 465
+Username: resend
+Password: sua RESEND_API_KEY
+Sender email: acesso@seu-dominio-verificado.com
+Sender name: Huddle
+```
+
+Em **Authentication > URL Configuration**, configure a URL oficial da aplicação como `Site URL` e adicione às `Redirect URLs`:
+
+```text
+https://seu-dominio.com/redefinir-senha
+http://localhost:5173/redefinir-senha
+```
+
+O domínio do remetente deve estar verificado no Resend. A API key deve permanecer somente no Resend/Supabase e nunca ser adicionada às variáveis `VITE_*`.

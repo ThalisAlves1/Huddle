@@ -271,6 +271,30 @@
   text-decoration: underline !important;
 }
 
+.forgot-password-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 9px;
+}
+
+.forgot-password-row a {
+  color: #007F8B;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.forgot-password-row a:hover {
+  text-decoration: underline;
+}
+
+.loading-inline {
+  padding: 18px 0;
+  color: #667085;
+  font-size: 13px;
+  text-align: center;
+}
+
 .success-box {
   margin-top: 13px;
   padding: 11px;

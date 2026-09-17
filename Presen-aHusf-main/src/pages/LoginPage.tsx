@@ -6,6 +6,7 @@ import {
 
 import {
   useNavigate,
+  useSearchParams,
 } from 'react-router'
 
 import {
@@ -50,6 +51,12 @@ function rotaPorPerfil(
 export function LoginPage() {
   const navigate =
     useNavigate()
+
+  const [searchParams] =
+    useSearchParams()
+
+  const senhaAlterada =
+    searchParams.get('senha') === 'alterada'
 
   const {
     user,
@@ -471,6 +478,12 @@ export function LoginPage() {
             required
           />
 
+          <div className="forgot-password-row">
+            <Link to="/esqueci-senha">
+              Esqueci minha senha
+            </Link>
+          </div>
+
 
           {
             erro
@@ -480,6 +493,20 @@ export function LoginPage() {
                 role="alert"
               >
                 {erro}
+              </div>
+            )
+          }
+
+
+          {
+            senhaAlterada
+            && !erro
+            && (
+              <div
+                className="success-box"
+                role="status"
+              >
+                Senha atualizada com sucesso. Entre usando sua nova senha.
               </div>
             )
           }

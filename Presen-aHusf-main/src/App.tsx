@@ -17,6 +17,10 @@ import './styles/scanner-ui.css'
 
 const LoginPage = lazy(() =>
   import('./pages/LoginPage').then(module => ({ default: module.LoginPage })))
+const ForgotPasswordPage = lazy(() =>
+  import('./pages/ForgotPasswordPage').then(module => ({ default: module.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() =>
+  import('./pages/ResetPasswordPage').then(module => ({ default: module.ResetPasswordPage })))
 const CadastroPage = lazy(() =>
   import('./pages/CadastroPage').then(module => ({ default: module.CadastroPage })))
 const EntryPage = lazy(() =>
@@ -58,6 +62,20 @@ function App() {
         path="/login"
         element={
           <LoginPage />
+        }
+      />
+
+      <Route
+        path="/esqueci-senha"
+        element={
+          <ForgotPasswordPage />
+        }
+      />
+
+      <Route
+        path="/redefinir-senha"
+        element={
+          <ResetPasswordPage />
         }
       />
 
