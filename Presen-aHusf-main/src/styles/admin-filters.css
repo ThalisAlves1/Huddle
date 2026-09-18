@@ -1396,6 +1396,57 @@
   font-size: 9px;
 }
 
+.huddle-detail-participants-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.huddle-detail-pdf-button {
+  min-height: 35px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  background: #009dab;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color .18s ease, transform .18s ease;
+}
+
+.huddle-detail-pdf-button:hover:not(:disabled) {
+  background: #007b86;
+  transform: translateY(-1px);
+}
+
+.huddle-detail-pdf-button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.huddle-detail-pdf-error {
+  padding: 10px 16px;
+  border-bottom: 1px solid #fecdca;
+  color: #b42318;
+  background: #fef3f2;
+  font-size: 9px;
+}
+
+@media (max-width: 680px) {
+  .huddle-detail-participants-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .huddle-detail-participants-actions select,
+  .huddle-detail-pdf-button {
+    width: 100%;
+  }
+}
+
 .huddle-detail-filter-summary {
   display: flex;
   align-items: center;

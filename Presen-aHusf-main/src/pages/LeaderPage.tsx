@@ -475,7 +475,7 @@ export function LeaderPage() {
                 horaFim,
 
               p_atraso_apos_minutos:
-                10,
+                0,
             }
           )
           .single()

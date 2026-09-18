@@ -39,7 +39,7 @@ create table if not exists public.huddles (
   encerrado_em timestamptz,
   expira_em timestamptz,
   duracao_minutos integer not null default 30,
-  atraso_apos_minutos integer not null default 10,
+  atraso_apos_minutos integer not null default 0,
   qr_payload text unique,
   criado_em timestamptz not null default now()
 );
@@ -426,7 +426,7 @@ as $$
     'huddle_status', h.status,
     'huddle_data', h.data_local,
     'iniciado_em', h.iniciado_em,
-    'atraso_apos', case when h.iniciado_em is null then null else h.iniciado_em + make_interval(mins => h.atraso_apos_minutos) end,
+    'atraso_apos', h.iniciado_em,
     'expira_em', h.expira_em,
     'presenca_id', pr.id,
     'presenca_status', pr.status,
@@ -479,7 +479,7 @@ begin
   if r.status not in ('EM_ANDAMENTO', 'AGENDADO') then raise exception 'Este Huddle nao esta disponivel.'; end if;
   if now() < r.iniciado_em then raise exception 'Este QR Code ainda nao esta valido.'; end if;
   if now() > r.expira_em then raise exception 'Este QR Code expirou.'; end if;
-  v_status := case when r.iniciado_em is not null and now() > r.iniciado_em + make_interval(mins => r.atraso_apos_minutos) then 'ATRASADO' else 'PRESENTE' end;
+  v_status := case when r.iniciado_em is not null and now() > r.iniciado_em then 'ATRASADO' else 'PRESENTE' end;
   insert into public.presencas (huddle_id, user_id, status, aceite, aceite_em, confirmado_em, aceite_texto, aceite_versao)
   values (r.id, auth.uid(), v_status, p_aceite, now(), now(), 'Confirmo minha participacao no Huddle.', '1.0')
   on conflict (huddle_id, user_id) do update set status = excluded.status, aceite = excluded.aceite, aceite_em = now(), confirmado_em = now();

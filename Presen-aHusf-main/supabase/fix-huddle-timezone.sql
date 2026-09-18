@@ -3,7 +3,7 @@
 
 create or replace function public.criar_huddle_lider(
   p_duracao_minutos integer default 30,
-  p_atraso_apos_minutos integer default 10,
+  p_atraso_apos_minutos integer default 0,
   p_hora_inicio time default null,
   p_hora_fim time default null
 )

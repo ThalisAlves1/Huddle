@@ -20,7 +20,7 @@ as $$
     'huddle_status', h.status,
     'huddle_data', h.data_local,
     'iniciado_em', h.iniciado_em,
-    'atraso_apos', case when h.iniciado_em is null then null else h.iniciado_em + make_interval(mins => h.atraso_apos_minutos) end,
+    'atraso_apos', h.iniciado_em,
     'expira_em', h.expira_em,
     'presenca_id', pr.id,
     'presenca_status', pr.status,

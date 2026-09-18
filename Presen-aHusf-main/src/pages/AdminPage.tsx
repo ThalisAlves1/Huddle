@@ -480,6 +480,16 @@ export function AdminPage() {
   ] = useState('')
 
   const [
+    gerandoPdfDetalhes,
+    setGerandoPdfDetalhes,
+  ] = useState(false)
+
+  const [
+    erroPdfDetalhes,
+    setErroPdfDetalhes,
+  ] = useState('')
+
+  const [
     filtroParticipante,
     setFiltroParticipante,
   ] = useState<FiltroParticipante>('TODOS')
@@ -749,6 +759,7 @@ export function AdminPage() {
       setDetalhesHuddleAberto(true)
       setDetalhesHuddleLoading(true)
       setDetalhesHuddleErro('')
+      setErroPdfDetalhes('')
       setDetalhesHuddle(null)
       setFiltroParticipante('TODOS')
 
@@ -796,7 +807,338 @@ export function AdminPage() {
     setDetalhesHuddleAberto(false)
     setDetalhesHuddle(null)
     setDetalhesHuddleErro('')
+    setErroPdfDetalhes('')
     setFiltroParticipante('TODOS')
+  }
+
+  async function baixarListaPresencaPdf() {
+    if (
+      !detalhesHuddle
+      || gerandoPdfDetalhes
+    ) {
+      return
+    }
+
+    try {
+      setGerandoPdfDetalhes(true)
+      setErroPdfDetalhes('')
+
+      const [
+        { jsPDF },
+        { autoTable },
+      ] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ])
+
+      const documento = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      const { huddle, kpis, participantes } =
+        detalhesHuddle
+
+      const participantesOrdenados = [...participantes]
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+
+      const desenharCartao = (
+        x: number,
+        y: number,
+        largura: number,
+        altura: number,
+        cor: [number, number, number]
+      ) => {
+        documento.setFillColor(cor[0], cor[1], cor[2])
+        documento.roundedRect(x, y, largura, altura, 2.2, 2.2, 'F')
+      }
+
+      const tituloComplementar = huddle.titulo
+        .replace(/^huddle\s*/i, '')
+        .trim() || 'Diário'
+
+      desenharCartao(7, 7, 196, 35, [0, 143, 158])
+      documento.setTextColor(255, 255, 255)
+      documento.setFont('helvetica', 'bold')
+      documento.setFontSize(7)
+      documento.text('DETALHES DO HUDDLE', 12, 13)
+      documento.setFontSize(18)
+      documento.text('Huddle', 12, 24)
+      const larguraHuddle = documento.getTextWidth('Huddle ')
+      documento.setTextColor(255, 190, 0)
+      documento.text(
+        documento.splitTextToSize(tituloComplementar, 35)[0],
+        12 + larguraHuddle,
+        24
+      )
+
+      documento.setTextColor(225, 250, 252)
+      documento.setFont('helvetica', 'normal')
+      documento.setFontSize(6.5)
+      documento.text(
+        `${huddle.codigo} · ${huddle.setor_nome} · ${formatarDataBr(huddle.data_local)}`,
+        12,
+        32
+      )
+
+      documento.setDrawColor(110, 204, 214)
+      documento.setLineWidth(0.3)
+      documento.line(96, 13, 96, 36)
+      documento.setTextColor(255, 255, 255)
+      documento.setFontSize(6.5)
+      documento.text('Equipes alinhadas', 102, 18)
+      documento.text('constroem um cuidado', 102, 23)
+      documento.text('cada vez melhor.', 102, 28)
+      documento.setDrawColor(255, 190, 0)
+      documento.setLineWidth(1)
+      documento.line(102, 33, 115, 33)
+
+      desenharCartao(154, 12, 44, 25, [255, 190, 0])
+      documento.setTextColor(0, 86, 101)
+      documento.setFont('helvetica', 'bold')
+      documento.setFontSize(5.5)
+      documento.text('DATA DO RELATÓRIO', 161, 19)
+      documento.setFontSize(11)
+      documento.text(
+        new Date().toLocaleDateString('pt-BR', {
+          timeZone: 'America/Sao_Paulo',
+        }),
+        161,
+        27
+      )
+
+      const informacoes = [
+        ['Responsável', huddle.responsavel_nome || 'Não informado'],
+        ['Início', formatarDataHora(huddle.iniciado_em)],
+        ['Encerramento', formatarDataHora(huddle.encerrado_em)],
+        ['Status', formatarStatusHuddle(huddle.status)],
+      ]
+
+      informacoes.forEach(([rotulo, valor], indice) => {
+        const x = 7 + indice * 49
+        desenharCartao(x, 46, 46, 17, [246, 248, 250])
+        documento.setFillColor(0, 157, 171)
+        documento.roundedRect(x + 3, 50, 6, 8, 1.5, 1.5, 'F')
+        documento.setTextColor(102, 112, 133)
+        documento.setFont('helvetica', 'normal')
+        documento.setFontSize(5)
+        documento.text(rotulo, x + 11, 51.5)
+        documento.setTextColor(16, 40, 62)
+        documento.setFont('helvetica', 'bold')
+        documento.setFontSize(6.2)
+        documento.text(
+          documento.splitTextToSize(valor, 31).slice(0, 2),
+          x + 11,
+          56
+        )
+      })
+
+      const indicadores = [
+        ['Esperados', kpis.total_esperado, [235, 248, 250]],
+        ['Confirmados', kpis.total_confirmado, [229, 248, 241]],
+        ['Presentes', kpis.total_presentes, [232, 249, 239]],
+        ['Atrasados', kpis.total_atrasados, [255, 247, 219]],
+        ['Ausentes', kpis.total_ausentes, [255, 232, 232]],
+        [
+          'Participação',
+          `${formatarPercentual(kpis.taxa_participacao)}%`,
+          [235, 240, 255],
+        ],
+      ] as const
+
+      indicadores.forEach(([rotulo, valor, cor], indice) => {
+        const x = 7 + indice * 32.7
+        desenharCartao(x, 67, 30.7, 19, [...cor])
+        documento.setTextColor(102, 112, 133)
+        documento.setFont('helvetica', 'normal')
+        documento.setFontSize(4.8)
+        documento.text(rotulo, x + 4, 73)
+        documento.setTextColor(16, 40, 62)
+        documento.setFont('helvetica', 'bold')
+        documento.setFontSize(10)
+        documento.text(String(valor), x + 4, 82)
+      })
+
+      documento.setDrawColor(225, 230, 236)
+      documento.setLineWidth(0.35)
+      documento.roundedRect(7, 90, 196, 18, 2.5, 2.5, 'S')
+      documento.setTextColor(0, 157, 171)
+      documento.setFont('helvetica', 'bold')
+      documento.setFontSize(5.5)
+      documento.text('PARTICIPANTES', 12, 96)
+      documento.setTextColor(16, 40, 62)
+      documento.setFontSize(10)
+      documento.text('Lista de presença', 12, 102)
+      documento.setFontSize(5.5)
+      documento.setFont('helvetica', 'normal')
+      documento.text(
+        `${participantesOrdenados.length} participante(s) · Pontualidade ${formatarPercentual(kpis.taxa_pontualidade)}%`,
+        198,
+        101,
+        { align: 'right' }
+      )
+
+      autoTable(documento, {
+        startY: 108,
+        theme: 'plain',
+        head: [[
+          '#',
+          '',
+          'PARTICIPANTE',
+          'SETOR',
+          'HORÁRIO',
+          'STATUS',
+        ]],
+        body: participantesOrdenados.map((participante, indice) => [
+          String(indice + 1),
+          iniciaisNome(participante.nome),
+          `${participante.nome}\nMatrícula ${participante.matricula}`,
+          participante.setor_nome || 'Sem setor',
+          participante.status === 'AUSENTE'
+            ? '—'
+            : formatarDataHora(participante.confirmado_em),
+          participante.status,
+        ]),
+        headStyles: {
+          fillColor: [0, 143, 158],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 5.5,
+          cellPadding: 2.2,
+        },
+        bodyStyles: {
+          textColor: [40, 60, 80],
+          fontSize: 5.8,
+          cellPadding: { top: 2.4, right: 1.5, bottom: 2.4, left: 1.5 },
+          minCellHeight: 10,
+          valign: 'middle',
+        },
+        alternateRowStyles: {
+          fillColor: [246, 249, 252],
+        },
+        columnStyles: {
+          0: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+          1: { cellWidth: 11, halign: 'center' },
+          2: { cellWidth: 61, fontStyle: 'bold' },
+          3: { cellWidth: 42 },
+          4: { cellWidth: 34 },
+          5: { cellWidth: 26, halign: 'center' },
+        },
+        margin: { top: 12, right: 14, bottom: 14, left: 14 },
+        didParseCell: dados => {
+          if (dados.section === 'body' && dados.column.index === 5) {
+            dados.cell.text = []
+          }
+        },
+        didDrawCell: dados => {
+          if (dados.section !== 'body') {
+            return
+          }
+
+          if (dados.column.index === 1) {
+            documento.setFillColor(216, 240, 245)
+            documento.circle(
+              dados.cell.x + dados.cell.width / 2,
+              dados.cell.y + dados.cell.height / 2,
+              3.3,
+              'F'
+            )
+            documento.setTextColor(0, 101, 116)
+            documento.setFont('helvetica', 'bold')
+            documento.setFontSize(4.5)
+            documento.text(
+              String(dados.cell.raw),
+              dados.cell.x + dados.cell.width / 2,
+              dados.cell.y + dados.cell.height / 2 + 1.5,
+              { align: 'center' }
+            )
+          }
+
+          if (dados.column.index === 5) {
+            const linha = dados.row.raw as string[]
+            const status = linha[5]
+            const estilo = status === 'PRESENTE'
+              ? {
+                  fundo: [210, 247, 232] as [number, number, number],
+                  texto: [0, 122, 91] as [number, number, number],
+                  rotulo: 'Presente',
+                }
+              : status === 'ATRASADO'
+                ? {
+                    fundo: [255, 238, 180] as [number, number, number],
+                    texto: [145, 91, 0] as [number, number, number],
+                    rotulo: 'Atrasado',
+                  }
+                : {
+                    fundo: [255, 220, 220] as [number, number, number],
+                    texto: [190, 45, 45] as [number, number, number],
+                    rotulo: 'Não confirmou',
+                  }
+            const largura = Math.min(dados.cell.width - 3, 22)
+            const x = dados.cell.x + (dados.cell.width - largura) / 2
+            const y = dados.cell.y + (dados.cell.height - 5.5) / 2
+
+            documento.setFillColor(...estilo.fundo)
+            documento.roundedRect(x, y, largura, 5.5, 2.5, 2.5, 'F')
+            documento.setTextColor(...estilo.texto)
+            documento.setFont('helvetica', 'bold')
+            documento.setFontSize(4.6)
+            documento.text(
+              estilo.rotulo,
+              dados.cell.x + dados.cell.width / 2,
+              y + 3.7,
+              { align: 'center' }
+            )
+          }
+        },
+      })
+
+      const totalPaginas = documento.getNumberOfPages()
+      const geradoEm = new Date().toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+      })
+
+      for (let pagina = 1; pagina <= totalPaginas; pagina += 1) {
+        documento.setPage(pagina)
+        documento.setFont('helvetica', 'normal')
+        documento.setFontSize(7)
+        documento.setTextColor(102, 112, 133)
+        documento.text(
+          `Gerado em ${geradoEm}`,
+          14,
+          289
+        )
+        documento.text(
+          `Página ${pagina} de ${totalPaginas}`,
+          196,
+          289,
+          { align: 'right' }
+        )
+      }
+
+      const nomeArquivo = [
+        'lista-presenca',
+        huddle.data_local,
+        huddle.codigo,
+      ]
+        .join('-')
+        .replace(/[^a-zA-Z0-9-]/g, '-')
+        .toLowerCase()
+
+      documento.save(`${nomeArquivo}.pdf`)
+    } catch (error) {
+      console.error(
+        'Erro ao gerar a lista de presença:',
+        error
+      )
+
+      setErroPdfDetalhes(
+        'Não foi possível gerar o PDF. Tente novamente.'
+      )
+    } finally {
+      setGerandoPdfDetalhes(false)
+    }
   }
 
   async function criarUsuario(
@@ -3154,34 +3496,61 @@ export function AdminPage() {
                                 </h3>
                               </div>
 
-                              <select
-                                value={filtroParticipante}
-                                onChange={
-                                  event =>
-                                    setFiltroParticipante(
-                                      converterFiltroParticipante(
-                                        event.target.value
+                              <div className="huddle-detail-participants-actions">
+                                <select
+                                  value={filtroParticipante}
+                                  onChange={
+                                    event =>
+                                      setFiltroParticipante(
+                                        converterFiltroParticipante(
+                                          event.target.value
+                                        )
                                       )
-                                    )
-                                }
-                              >
-                                <option value="TODOS">
-                                  Todos
-                                </option>
+                                  }
+                                >
+                                  <option value="TODOS">
+                                    Todos
+                                  </option>
 
-                                <option value="PRESENTE">
-                                  Presentes
-                                </option>
+                                  <option value="PRESENTE">
+                                    Presentes
+                                  </option>
 
-                                <option value="ATRASADO">
-                                  Atrasados
-                                </option>
+                                  <option value="ATRASADO">
+                                    Atrasados
+                                  </option>
 
-                                <option value="AUSENTE">
-                                  Ausentes
-                                </option>
-                              </select>
+                                  <option value="AUSENTE">
+                                    Ausentes
+                                  </option>
+                                </select>
+
+                                <button
+                                  type="button"
+                                  className="huddle-detail-pdf-button"
+                                  onClick={baixarListaPresencaPdf}
+                                  disabled={gerandoPdfDetalhes}
+                                >
+                                  {
+                                    gerandoPdfDetalhes
+                                      ? 'Gerando PDF...'
+                                      : 'Baixar lista em PDF'
+                                  }
+                                </button>
+                              </div>
                             </div>
+
+                            {
+                              erroPdfDetalhes
+                              && (
+                                <div
+                                  className="huddle-detail-pdf-error"
+                                  role="alert"
+                                >
+                                  {erroPdfDetalhes}
+                                </div>
+                              )
+                            }
 
                             <div className="huddle-detail-filter-summary">
                               <span>

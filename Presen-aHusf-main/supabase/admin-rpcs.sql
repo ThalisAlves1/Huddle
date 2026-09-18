@@ -205,7 +205,7 @@ begin
       'responsavel_nome', responsavel.nome,
       'responsavel_matricula', responsavel.matricula,
       'iniciado_em', h.iniciado_em,
-      'atraso_apos', h.iniciado_em + make_interval(mins => h.atraso_apos_minutos),
+      'atraso_apos', h.iniciado_em,
       'expira_em', h.expira_em,
       'encerrado_em', h.encerrado_em,
       'created_at', h.criado_em
